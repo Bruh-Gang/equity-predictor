@@ -1,79 +1,54 @@
-# Equity Return Predictor — Numerai Tournament Research
+# equity-predictor
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python&logoColor=white)
-![XGBoost](https://img.shields.io/badge/XGBoost-1.7%2B-orange?logo=xgboost&logoColor=white)
-![LightGBM](https://img.shields.io/badge/LightGBM-3.3%2B-green?logo=lightgbm&logoColor=white)
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-Ensemble machine learning system for predicting equity returns using Numerai's obfuscated, era-structured financial dataset. Combines gradient boosting, feature engineering, and stacked meta-learners to compete in a live global prediction tournament evaluated against professional quantitative researchers.
+This is my Numerai pipeline. Numerai is basically a hedge fund that crowdsources ML predictions on obfuscated stock data — you download a dataset of anonymized features, predict targets, submit weekly, and get scored against other models worldwide. I've been competing for a while and this repo is where I keep all the actual research.
 
----
+Stack: XGBoost + LightGBM stacked ensemble, era-aware cross-validation, feature neutralization. Still tweaking it.
 
-## Architecture
+## How it works
+
+The pipeline has three stages:
+
+1. **Feature Engineering** — Raw Numerai features enriched with rolling window statistics, cross-sectional rank normalization, era-neutral transformations, and pairwise interaction terms.
+2. **Base Models** — XGBoost and LightGBM trained independently using 5-fold CV grouped by era. Out-of-fold predictions become the meta-learner's training signal.
+3. **Meta-Learner** — Ridge regression that blends OOF predictions from both base models to produce the final output.
 
 ```
 equity-predictor/
 ├── src/
 │   ├── features.py        # Feature engineering pipeline
 │   ├── models.py          # XGBoost, LightGBM, StackedEnsemble
-│   ├── train.py           # Training entrypoint with cross-validation
+│   ├── train.py           # Training entrypoint with CV
 │   └── predict.py         # Inference on new data
 ├── analysis/
 │   └── feature_analysis.py  # Feature importance & stability plots
 ├── notebooks/
-│   └── model_development.ipynb  # Research walkthrough
-├── models/                # Serialized trained models
+│   └── model_development.ipynb
+├── models/
 ├── requirements.txt
 └── README.md
 ```
 
-The pipeline follows a three-stage design:
+## Key technical decisions
 
-1. **Feature Engineering** — Raw Numerai features are enriched with rolling window statistics, cross-sectional rank normalization, era-neutral transformations, and pairwise interaction terms.
-2. **Base Models** — XGBoost and LightGBM are trained independently using 5-fold cross-validation grouped by era. Out-of-fold (OOF) predictions serve as the meta-learner's training signal.
-3. **Meta-Learner (Stacked Ensemble)** — A Ridge regression meta-learner blends OOF predictions from both base models to produce the final output, reducing variance while preserving signal.
-
----
-
-## Features
-
-- **Era-structured cross-validation** — folds respect temporal era boundaries to prevent lookahead bias
-- **Rolling statistics** — mean, std, and skew computed over 5, 10, and 20 period windows
+- **Era-structured CV** — folds respect temporal era boundaries so there's no lookahead bias
 - **Cross-sectional rank normalization** — features and targets ranked within each era to remove distributional shift
-- **Era-neutral features** — feature values projected orthogonal to era means to isolate stock-specific signal
-- **Interaction terms** — pairwise products of high-MI feature pairs
-- **Mutual information feature selection** — top-N features chosen via MI + Pearson correlation filter
-- **Sharpe-based evaluation** — weekly grouped correlations produce a Sharpe ratio analogous to the Numerai leaderboard metric
-- **Full model serialization** — all models saved with `joblib` for reproducible inference
+- **Era-neutral features** — values projected orthogonal to era means to isolate stock-specific signal
+- **MI feature selection** — top-N features chosen via mutual information + Pearson filter
+- **Sharpe-based evaluation** — weekly grouped correlations give a Sharpe ratio that mirrors the Numerai leaderboard metric
 
----
+## Models
 
-## Models Used
-
-| Model | Library | Key Hyperparameters |
+| Model | Library | Key Params |
 |---|---|---|
-| XGBoost | `xgboost` | `n_estimators=500`, `max_depth=5`, `learning_rate=0.01`, `subsample=0.8` |
-| LightGBM | `lightgbm` | `n_estimators=500`, `num_leaves=31`, `learning_rate=0.01`, `feature_fraction=0.8` |
-| Ridge Meta-Learner | `scikit-learn` | `alpha=1.0`, inputs = OOF predictions from XGB + LGBM |
+| XGBoost | `xgboost` | `n_estimators=500`, `max_depth=5`, `lr=0.01`, `subsample=0.8` |
+| LightGBM | `lightgbm` | `n_estimators=500`, `num_leaves=31`, `lr=0.01`, `feature_fraction=0.8` |
+| Ridge Meta-Learner | `scikit-learn` | `alpha=1.0`, inputs = OOF from XGB + LGBM |
 
----
+Competitive Numerai submissions target validation Spearman correlation of ~0.025–0.045 with Sharpe > 1.0.
 
-## Performance Metrics
-
-The evaluation suite reports the following metrics on held-out validation data:
-
-| Metric | Description |
-|---|---|
-| **Pearson Correlation** | Linear correlation between predicted ranks and realized returns |
-| **Spearman Correlation** | Rank-based correlation (primary Numerai metric) |
-| **Sharpe Ratio** | Mean era-wise correlation divided by std — measures signal consistency |
-| **Max Drawdown** | Worst peak-to-trough sequence of negative era correlations |
-
-Competitive Numerai submissions typically target a mean validation Spearman correlation of **0.025–0.045** with a Sharpe > 1.0.
-
----
-
-## Installation
+## Install
 
 ```bash
 git clone https://github.com/Bruh-Gang/equity-predictor.git
@@ -83,11 +58,9 @@ source .venv/bin/activate       # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
----
-
 ## Usage
 
-### Download Numerai Data
+Download Numerai data:
 
 ```python
 import numerapi
@@ -97,7 +70,7 @@ napi.download_dataset("v4.3/validation.parquet", "data/validation.parquet")
 napi.download_dataset("v4.3/live.parquet", "data/live.parquet")
 ```
 
-### Train
+Train:
 
 ```bash
 python src/train.py \
@@ -106,7 +79,7 @@ python src/train.py \
   --n_folds 5
 ```
 
-### Predict
+Predict:
 
 ```bash
 python src/predict.py \
@@ -115,7 +88,7 @@ python src/predict.py \
   --output_path predictions/live_predictions.csv
 ```
 
-### Feature Analysis
+Feature analysis:
 
 ```bash
 python analysis/feature_analysis.py \
@@ -124,14 +97,4 @@ python analysis/feature_analysis.py \
   --output_dir analysis/plots/
 ```
 
----
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
-
----
-
-## Acknowledgements
-
-Built as research tooling for the [Numerai](https://numer.ai) tournament — a weekly, stock-market-neutral ML competition using obfuscated financial features.
+MIT License
