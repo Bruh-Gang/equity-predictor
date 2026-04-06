@@ -45,7 +45,7 @@ def parse_args() -> argparse.Namespace:
         "--model_path",
         type=str,
         required=True,
-        help="Path to the saved model file (.pkl).",
+        help="Path to the saved model file (.joblib).",
     )
     parser.add_argument(
         "--data_path",

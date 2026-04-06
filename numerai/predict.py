@@ -33,7 +33,7 @@ def predict_live(
 ) -> pd.DataFrame:
     """Load models, generate live predictions using the pipeline, optionally submit."""
 
-    pipeline_path = Path(outputs_dir) / "numerblox_meta_pipeline.pkl"
+    pipeline_path = Path(outputs_dir) / "numerblox_meta_pipeline.joblib"
     if not pipeline_path.exists():
         raise FileNotFoundError(f"Pipeline not found at {pipeline_path}. Run train.py first.")
 

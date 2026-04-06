@@ -7,7 +7,7 @@ and optional Optuna hyperparameter search.
 """
 
 import logging
-import pickle
+import joblib
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
@@ -168,17 +168,15 @@ class NumeraiLGBM:
         return importances.mean(axis=1).sort_values(ascending=False)
 
     def save(self, path: str) -> None:
-        """Pickle the model."""
+        """Save model using joblib."""
         Path(path).parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "wb") as f:
-            pickle.dump(self, f, protocol=4)
+        joblib.dump(self, path)
         logger.info(f"Saved LightGBM model to {path}")
 
     @classmethod
     def load(cls, path: str) -> "NumeraiLGBM":
-        """Load pickled model."""
-        with open(path, "rb") as f:
-            return pickle.load(f)
+        """Load model using joblib."""
+        return joblib.load(path)
 
 
 def tune_lgbm(

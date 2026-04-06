@@ -49,7 +49,7 @@ logger = logging.getLogger(__name__)
 
 
 def pipeline_exists() -> bool:
-    return (OUTPUTS_DIR / "numerblox_meta_pipeline.pkl").exists()
+    return (OUTPUTS_DIR / "numerblox_meta_pipeline.joblib").exists()
 
 
 def seconds_until_next_run(now: datetime) -> float:

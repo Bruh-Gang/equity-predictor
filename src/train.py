@@ -210,15 +210,15 @@ def main() -> None:
     xgb_cv = xgb_model.cross_validate(X, y, eras=eras, n_folds=args.n_folds)
     print(f"  CV Spearman: {xgb_cv['mean_spearman']:.4f} ± {np.std(xgb_cv['val_spearman']):.4f}")
     xgb_model.fit(X, y)
-    xgb_model.save(str(output_dir / "xgboost_model.pkl"))
-    print(f"  Saved → {output_dir / 'xgboost_model.pkl'}")
+    xgb_model.save(str(output_dir / "xgboost_model.joblib"))
+    print(f"  Saved → {output_dir / 'xgboost_model.joblib'}")
 
     print("\n  -- LightGBM --")
     lgb_cv = lgb_model.cross_validate(X, y, eras=eras, n_folds=args.n_folds)
     print(f"  CV Spearman: {lgb_cv['mean_spearman']:.4f} ± {np.std(lgb_cv['val_spearman']):.4f}")
     lgb_model.fit(X, y)
-    lgb_model.save(str(output_dir / "lightgbm_model.pkl"))
-    print(f"  Saved → {output_dir / 'lightgbm_model.pkl'}")
+    lgb_model.save(str(output_dir / "lightgbm_model.joblib"))
+    print(f"  Saved → {output_dir / 'lightgbm_model.joblib'}")
 
     # ---- Train stacked ensemble ----
     print("\n  -- Stacked Ensemble --")
@@ -228,8 +228,8 @@ def main() -> None:
         n_folds=args.n_folds,
     )
     ensemble.fit(X, y, eras=eras)
-    ensemble.save(str(output_dir / "ensemble.pkl"))
-    print(f"  Saved → {output_dir / 'ensemble.pkl'}")
+    ensemble.save(str(output_dir / "ensemble.joblib"))
+    print(f"  Saved → {output_dir / 'ensemble.joblib'}")
 
     # ---- Evaluate on training data (in-sample, for logging) ----
     print("\n[5/5] Evaluating ensemble on training data (OOF)...")

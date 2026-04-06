@@ -6,7 +6,7 @@ Diversity from LightGBM makes it valuable in the ensemble.
 """
 
 import logging
-import pickle
+import joblib
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
@@ -119,10 +119,8 @@ class NumeraiXGB:
 
     def save(self, path: str) -> None:
         Path(path).parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "wb") as f:
-            pickle.dump(self, f, protocol=4)
+        joblib.dump(self, path)
 
     @classmethod
     def load(cls, path: str) -> "NumeraiXGB":
-        with open(path, "rb") as f:
-            return pickle.load(f)
+        return joblib.load(path)

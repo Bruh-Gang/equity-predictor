@@ -143,7 +143,7 @@ def run_pipeline(cfg: NumeraiConfig, args) -> None:
     logger.info("=" * 70)
     logger.info("STEP 4: Saving Completed Pipeline")
     logger.info("=" * 70)
-    pipeline_path = "outputs/numerblox_meta_pipeline.pkl"
+    pipeline_path = "outputs/numerblox_meta_pipeline.joblib"
     joblib.dump(full_pipe, pipeline_path)
     logger.info(f"Saved full meta pipeline safely to: {pipeline_path}")
 
